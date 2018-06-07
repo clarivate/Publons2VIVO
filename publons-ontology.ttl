@@ -1,0 +1,185 @@
+@prefix ocrer: <http://purl.org/net/OCRe/research.owl#> .
+@prefix cce:   <http://vivoweb.org/ontology/cornell-cooperative-extension#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix scires: <http://vivoweb.org/ontology/scientific-research#> .
+@prefix vivoc: <http://vivo.library.cornell.edu/ns/0.1#> .
+@prefix swrlb: <http://www.w3.org/2003/11/swrlb#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix ocresd: <http://purl.org/net/OCRe/study_design.owl#> .
+@prefix swo:   <http://www.ebi.ac.uk/efo/swo/> .
+@prefix hr:    <http://vivo.cornell.edu/ns/hr/0.9/hr.owl#> .
+@prefix aktp:  <http://www.aktors.org/ontology/portal#> .
+@prefix pubmed: <http://vitro.mannlib.cornell.edu/ns/pubmed#> .
+@prefix ocresst: <http://purl.org/net/OCRe/statistics.owl#> .
+@prefix sce:   <http://vivoweb.org/ontology/SchoolOfContinuingEducation#> .
+@prefix terms: <http://purl.org/dc/terms/> .
+@prefix far:   <http://vitro.mannlib.cornell.edu/ns/reporting#> .
+@prefix swvs:  <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix scirr: <http://vivoweb.org/ontology/scientific-research-resource#> .
+@prefix wos:   <http://data.wokinfo.com/ontology/wos#> .
+@prefix owl2:  <http://www.w3.org/2006/12/owl2-xml#> .
+@prefix vivo:  <http://vivoweb.org/ontology/core#> .
+@prefix vann:  <http://purl.org/vocab/vann/> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix app:   <http://eagle-i.org/ont/app/1.0/> .
+@prefix ctca:  <http://162.243.109.65/ontology/clinicaltrials#> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
+@prefix ai:    <http://vivoweb.org/ontology/activity-insight#> .
+@prefix swrl:  <http://www.w3.org/2003/11/swrl#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix ospcu: <http://vivoweb.org/ontology/cu-vivo-osp#> .
+@prefix pvs:   <http://vivoweb.org/ontology/provenance-support#> .
+@prefix j.0:   <http://aims.fao.org/aos/geopolitical.owl#> .
+@prefix vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#> .
+@prefix vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#> .
+@prefix core:  <http://vivoweb.org/ontology/core#> .
+@prefix ocresp: <http://purl.org/net/OCRe/study_protocol.owl#> .
+@prefix socsci: <http://vivo.library.cornell.edu/ns/vivo/socsci/0.1#> .
+@prefix acti:  <http://vivoweb.org/ontology/activity-insight#> .
+@prefix ro:    <http://purl.obolibrary.org/obo/ro.owl#> .
+@prefix ns:    <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcelem: <http://purl.org/dc/elements/1.1/> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix geopolitical: <http://aims.fao.org/aos/geopolitical.owl#> .
+@prefix local: <http://vivo.cornell.edu/ontology/local#> .
+@prefix cito:  <http://purl.org/spar/cito/> .
+@prefix geo:   <http://aims.fao.org/aos/geopolitical.owl#> .
+@prefix wcmc:  <http://weill.cornell.edu/vivo/ontology/wcmc#> .
+@prefix event: <http://purl.org/NET/c4dm/event.owl#> .
+@prefix c4o:   <http://purl.org/spar/c4o/> .
+@prefix study_protocol: <http://purl.org/net/OCRe/study_protocol.owl#> .
+@prefix ero:   <http://purl.obolibrary.org/obo/> .
+@prefix mann:  <http://vivo.cornell.edu/ns/mannadditions/0.1#> .
+@prefix display: <http://vitro.mannlib.cornell.edu/ontologies/display/1.1#> .
+@prefix afn:   <http://jena.apache.org/ARQ/function#> .
+@prefix stars: <http://vitro.mannlib.cornell.edu/ns/cornell/stars/classes#> .
+@prefix rdfsyn: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix skos2: <http://www.w3.org/2008/05/skos#> .
+@prefix skco:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix aka:   <http://vivoweb.org/ontology/aka#> .
+@prefix bibo:  <http://purl.org/ontology/bibo/> .
+@prefix pub:   <https://publons.com/ontology/pub#> .
+@prefix config: <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#> .
+@prefix obo:   <http://purl.obolibrary.org/obo/> .
+@prefix statistics: <http://purl.org/net/OCRe/statistics.owl#> .
+@prefix dc:    <http://purl.org/dc/elements/1.1/> .
+
+<https://publons.com/ontology/merit>
+        a                           owl:FunctionalProperty , owl:DatatypeProperty ;
+        rdfs:domain                 foaf:Person ;
+        rdfs:label                  "Publons merit"@en-US ;
+        rdfs:range                  xsd:integer ;
+        vitro:displayRankAnnot      "10"^^xsd:int ;
+        vitro:hiddenFromDisplayBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:hiddenFromPublishBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:inPropertyGroupAnnot  <http://vivoweb.org/ontology#vitroPropertyGroupoutreach> ;
+        vitro:prohibitedFromUpdateBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> .
+
+<https://publons.com/ontology/reviewFor>
+        a                              owl:ObjectProperty ;
+        rdfs:domain                    <https://publons.com/ontology/Review> ;
+        rdfs:label                     "review for"@en-US ;
+        rdfs:range                     bibo:Journal ;
+        vitro:displayLimitAnnot        "-1"^^xsd:int ;
+        vitro:hiddenFromDisplayBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:hiddenFromPublishBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:prohibitedFromUpdateBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:selectFromExistingAnnot  true ;
+        owl:inverseOf                  <https://publons.com/ontology/hasReview> .
+
+pub:publonsWidget  a                owl:DatatypeProperty , owl:FunctionalProperty ;
+        rdfs:domain                 foaf:Person ;
+        rdfs:label                  "peer review activity"^^rdf:langString ;
+        rdfs:range                  xsd:string ;
+        vitro:hiddenFromDisplayBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:hiddenFromPublishBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:inPropertyGroupAnnot  <http://vivoweb.org/ontology#vitroPropertyGroupoutreach> ;
+        vitro:prohibitedFromUpdateBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> .
+
+<https://publons.com/ontology/pub>
+        a                          owl:Ontology ;
+        rdfs:label                 "Publons"^^rdf:langString ;
+        vitro:ontologyPrefixAnnot  "pub" .
+
+pub:reviewedBy  a                      owl:ObjectProperty ;
+        rdfs:domain                    bibo:Journal ;
+        rdfs:label                     "journal article reviewed by"^^rdf:langString ;
+        rdfs:range                     foaf:Person ;
+        vitro:hiddenFromDisplayBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:hiddenFromPublishBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:prohibitedFromUpdateBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:selectFromExistingAnnot  true ;
+        owl:inverseOf                  pub:reviewedFor .
+
+<https://publons.com/ontology/hasReview>
+        a                              owl:ObjectProperty ;
+        rdfs:domain                    bibo:Journal ;
+        rdfs:label                     "has review"@en-US ;
+        rdfs:range                     <https://publons.com/ontology/Review> ;
+        vitro:collateBySubclassAnnot   true ;
+        vitro:hiddenFromDisplayBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:hiddenFromPublishBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:prohibitedFromUpdateBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:selectFromExistingAnnot  true ;
+        owl:inverseOf                  <https://publons.com/ontology/reviewFor> .
+
+<https://publons.com/ontology/Review>
+        a                   owl:Class ;
+        rdfs:label          "Review (via Publons)"@en-US ;
+        rdfs:subClassOf     bibo:Document ;
+        vitro:hiddenFromDisplayBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:hiddenFromPublishBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:inClassGroup  <http://vivoweb.org/ontology#vitroClassGrouppublications> ;
+        vitro:prohibitedFromUpdateBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> .
+
+<https://publons.com/ontology/publonsId>
+        a                           owl:DatatypeProperty ;
+        rdfs:domain                 foaf:Person ;
+        rdfs:label                  "Publons ID"@en-US ;
+        vitro:hiddenFromDisplayBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:hiddenFromPublishBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:inPropertyGroupAnnot  <http://vivoweb.org/ontology#vitroPropertyGroupidentifiers> ;
+        vitro:prohibitedFromUpdateBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> .
+
+pub:reviewedFor  a                     owl:ObjectProperty ;
+        rdfs:domain                    foaf:Person ;
+        rdfs:label                     "journal reviewed for"^^rdf:langString ;
+        rdfs:range                     bibo:Journal ;
+        vitro:displayLimitAnnot        -1 ;
+        vitro:hiddenFromDisplayBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:hiddenFromPublishBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#public> ;
+        vitro:prohibitedFromUpdateBelowRoleLevelAnnot
+                <http://vitro.mannlib.cornell.edu/ns/vitro/role#editor> ;
+        vitro:selectFromExistingAnnot  true ;
+        owl:inverseOf                  pub:reviewedBy .
+
+<https://publons.com/ontology/>
+        a                          owl:Ontology ;
+        rdfs:label                 "Publons"^^rdf:langString ;
+        vitro:ontologyPrefixAnnot  "pub" .

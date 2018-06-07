@@ -167,7 +167,7 @@ def gen_review_triples(per_uri, data, journals, g):
         url_uri = 'review-url-{}'.format(review['id'])
         role_uri = 'reviewer-role-{}'.format(review['id'])
         g.add((D[rev_uri], PUB.reviewFor, journal_uri))
-        g.add((journal_uri, PUB.reviewFor, D[rev_uri]))
+        g.add((journal_uri, PUB.hasReview, D[rev_uri]))
         g.add((D[rev_uri], RDF.type, PUB.Review))
         g.add((D[rev_uri], RDFS.label, Literal('Review {}'.format(review['id']),
                datatype=XSD.string)))
@@ -343,6 +343,7 @@ for publons_profile in d:
     #print(d[publons_profile])
     (g_rev, journals) = gen_review_triples(per_uri, d[publons_profile], journals, g)
     g+=g_rev
+    g.add((per_uri, PUB.merit, Literal(d[publons_profile]['merit'], datatype=XSD.integer)))
 
 timestamp = str(datetime.now())[:-7]
 if len(g) > 0:
