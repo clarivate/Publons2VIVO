@@ -3,7 +3,6 @@ Basic Python client for Publons.
 https://publons.com/api/v2/
 """
 
-from itertools import izip_longest
 import os
 import requests
 import logging
@@ -348,7 +347,7 @@ for publons_profile in d:
 timestamp = str(datetime.now())[:-7]
 if len(g) > 0:
     try:
-        with open("rdf/publons-"+timestamp+"-in.ttl", "w") as f:
+        with open("rdf/publons-"+timestamp+"-in.ttl", "wb") as f:
             f.write(g.serialize(format=args.format))
             log.info('Wrote RDF to rdf/publons-' + timestamp +
                      '-in.ttl in ' + args.format + ' format.')

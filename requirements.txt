@@ -1,0 +1,4 @@
+nameparser
+requests
+SPARQLWrapper
+rdflib
