@@ -99,6 +99,8 @@ def get_academic_details(BASE_URL, id, d):
                 review_url['url'] = result['ids']['academic']['url']
                 review_url['date'] = result['date_reviewed']
                 review_url['journal'] = result['journal']['name']
+                review_url['journal_issn'] = result['journal']['ids']['issn']
+                review_url['journal_eissn'] = result['journal']['ids']['eissn']
 
                 academic_reviews.append(review_url)
         except:
@@ -133,12 +135,35 @@ def get_academic_basic_info(BASE_URL, id, d):
     return(d)
 
 
-def gen_review_triples(per_uri, data, g):
+def gen_review_triples(per_uri, data, journals, g):
     for review in data['reviews']:
+        journal_uri = None
+        if 'journal_issn' in review and review['journal_issn']:
+            if review['journal_issn'] in journals:
+                journal_uri = URIRef(journals[review['journal_issn']])
+                logger.debug('Matched journal via ISSN')
+        elif 'journal_eissn' in review and review['journal_eissn']:
+            if review['journal_eissn'] in journals:
+                journal_uri = URIRef(journals[review['journal_eissn']])
+                logger.debug('Matched journal via EISSN')
+        if not journal_uri:
+            logger.debug('Could not match journal, creating a new one')
+            journal_uri = D[uri_gen('jrnl-')]
+            g.add((journal_uri, RDF.type, BIBO.Journal))
+            g.add((journal_uri, RDFS.label, Literal(review['journal'])))
+            if 'journal_issn' in review and review['journal_issn']:
+                g.add((journal_uri, BIBO.issn, Literal(review['journal_issn'])))
+                journals[review['journal_issn']] = journal_uri
+            if 'journal_eissn' in review and review['journal_eissn']:
+                g.add((journal_uri, BIBO.eissn, Literal(review['journal_eissn'])))
+                journals[review['journal_eissn']] = journal_uri
+
         rev_uri = 'review-{}'.format(review['id'])
         vcard_uri = 'review-vcard-{}'.format(review['id'])
         url_uri = 'review-url-{}'.format(review['id'])
         role_uri = 'reviewer-role-{}'.format(review['id'])
+        g.add((D[rev_uri], PUB.reviewFor, journal_uri))
+        g.add((journal_uri, PUB.reviewFor, D[rev_uri]))
         g.add((D[rev_uri], RDF.type, PUB.Review))
         g.add((D[rev_uri], RDFS.label, Literal('Review {}'.format(review['id']),
                datatype=XSD.string)))
@@ -153,7 +178,13 @@ def gen_review_triples(per_uri, data, g):
         g.add((D[vcard_uri], VCARD.hasURL, D[url_uri]))
         g.add((D[url_uri], RDF.type, VCARD.URL))
         g.add((D[url_uri], VCARD.url, Literal(review['url'])))
-    return g
+        if 'date' in review and review['date']:
+            date_uri = 'review-date-{}'.format(review['id'])
+            g.add((D[rev_uri], VIVO.dateTimeValue, D[date_uri]))
+            g.add((D[date_uri], RDF.type, VIVO.DateTimeValue))
+            g.add((D[date_uri], VIVO.dateTimePrecision, VIVO.yearPrecision))
+            g.add((D[date_uri], VIVO.dateTime, Literal("{}".format(review['date']), datatype=XSD.year)))
+    return (g, journals)
 
 
 def get_people():
@@ -177,6 +208,35 @@ def get_people():
                  people[orcid] = uri
     log.debug(people)
     return people
+
+
+def get_journals():
+    # Let's try to match on ORCIDs
+    query = ("PREFIX vivo: <"+VIVO+"> "
+             "PREFIX bibo: <"+BIBO+"> "
+             "SELECT ?journal ?issn ?eissn "
+             "WHERE {{ "
+	         "?journal a bibo:Journal . } "
+             "UNION {?journal a bibo:Journal . "
+             "?journal bibo:issn ?issn . } "
+              "UNION {?journal a bibo:Journal . "
+              "?journal bibo:eissn ?eissn . } "
+             "} ")
+
+    bindings = vivo_api_query(query)
+    journals = {}
+    if bindings:
+        for rec in bindings:
+            if 'journal' in rec:
+                uri = rec['journal']['value']
+                if 'issn' in rec:
+                    issn = rec['issn']['value']
+                    journals[issn] = uri
+                if 'eissn' in rec:
+                    eissn = rec['eissn']['value']
+                    journals[eissn] = uri
+    log.debug(journals)
+    return journals
 
 
 if __name__ == '__main__':
@@ -237,6 +297,8 @@ log = logging.getLogger(__name__)
 
 # Start the work
 people = get_people()
+journals = get_journals()
+
 if args.organization:
     academics = get_academics(BASE_URL, args.organization)
     log.debug(academics)
@@ -255,6 +317,7 @@ for id in academics:
 
 # Now we have a subset of data we can work with
 for publons_profile in d:
+    log.debug(publons_profile)
     if 'orcid' in d[publons_profile] and d[publons_profile]['orcid']:
         orcid = d[publons_profile]['orcid']
 
@@ -269,8 +332,8 @@ for publons_profile in d:
         (per_uri, gcard) = create_vcard(d[publons_profile]['name'])
         g += gcard
     #print(d[publons_profile])
-
-    g+=gen_review_triples(per_uri, d[publons_profile], g)
+    (g_rev, journals) = gen_review_triples(per_uri, d[publons_profile], journals, g)
+    g+=g_rev
 
 timestamp = str(datetime.now())[:-7]
 if len(g) > 0:
