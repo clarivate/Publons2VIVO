@@ -10,6 +10,7 @@ import logging
 from datetime import datetime
 from logging import handlers
 from datetime import datetime
+from time import sleep
 import argparse
 import json
 from rdflib import Literal, Graph, XSD, URIRef
@@ -110,6 +111,9 @@ def get_academic_details(BASE_URL, id, d):
         if r['next'] is not None:
             req = req.replace('page={}'.format(page),'page={}'.format(page+1))
             page+=1
+            if (page > 5):
+                log.debug('Sleeping for 15 seconds, gotta be careful')
+                sleep(15) # Chill out a bit
         else:
             break
     d[id]['reviews'] = academic_reviews
@@ -191,20 +195,24 @@ def get_people():
     # Let's try to match on ORCIDs
     query = ("PREFIX vivo: <"+VIVO+"> "
              "PREFIX foaf: <"+FOAF+"> "
+             "PREFIX pub: <"+PUB+"> "
              "SELECT ?per ?orcid "
              "WHERE { "
-	         "?per a foaf:Person . "
-             "?per vivo:orcidId ?orcid . "
+	         "{ ?per a foaf:Person . "
+             "?per vivo:orcidId ?orcid . } "
+ 	         "UNION { ?per a foaf:Person . "
+             "?per pub:publonsId ?orcid . } "
              "} ")
 
     bindings = vivo_api_query(query)
     people = {}
     if bindings:
         for rec in bindings:
-             if 'per' in rec:
+            if 'per' and 'orcid' in rec:
                  uri = rec['per']['value']
                  orcid = rec['orcid']['value'].replace('http://orcid.org/',
-                            '').replace('https://orcid.org/', '')
+                            '').replace('https://orcid.org/', '').replace(
+                            'https://publons.com/a/', '').replace('/', '')
                  people[orcid] = uri
     log.debug(people)
     return people
@@ -318,12 +326,13 @@ for id in academics:
 # Now we have a subset of data we can work with
 for publons_profile in d:
     log.debug(publons_profile)
-    if 'orcid' in d[publons_profile] and d[publons_profile]['orcid']:
+    if publons_profile in people:
+        per_uri = URIRef(people[publons_profile])
+    elif 'orcid' in d[publons_profile] and d[publons_profile]['orcid']:
         orcid = d[publons_profile]['orcid']
 
         if orcid in people:
             per_uri = URIRef(people[orcid])
-            g += gcard
             log.debug('Matched record with ORCID {} in VIVO'.format(orcid))
         else:
             (per_uri, gcard) = create_vcard(d[publons_profile]['name'])
