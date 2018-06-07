@@ -7,9 +7,18 @@ from itertools import izip_longest
 import os
 import requests
 import logging
+from datetime import datetime
 from logging import handlers
 from datetime import datetime
 import argparse
+import json
+from rdflib import Literal, Graph, XSD, URIRef
+from rdflib.namespace import Namespace
+from namespace import (VIVO, VCARD, OBO, BIBO, FOAF, SKOS, D,
+                                      RDFS, RDF, PUB)
+import SPARQLWrapper
+import namespace as ns
+from api_fx import (vivo_api_query, uri_gen, create_vcard)
 
 try:
     USER = os.environ['PUBLONS_USER']
@@ -53,7 +62,7 @@ def get_r(BASE_URL, req):
 
 def get_academics(BASE_URL, org):
     req = 'academic/?institution={}'.format(org)
-    academic_list = []
+    academic_list = set()
 
     page = 1
     while True:
@@ -62,7 +71,7 @@ def get_academics(BASE_URL, org):
             for person in r['results']:
                 per_url = (person['ids']['api'].
                            replace('https://publons.com/api/v2/academic/', ''))
-                academic_list.append(per_url)
+                academic_list.add(per_url[0:-1])
         except:
             print('Received invalid response')
 
@@ -77,7 +86,7 @@ def get_academics(BASE_URL, org):
 
 
 def get_academic_details(BASE_URL, id, d):
-    req = 'academic/review/?academic={}'.format(id)
+    req = 'academic/review/?academic={}&page=1'.format(id)
     academic_reviews = []
 
     page = 1
@@ -85,19 +94,24 @@ def get_academic_details(BASE_URL, id, d):
         r = get_r(BASE_URL, req)
         try:
             for result in r['results']:
-                review_url = result['ids']['url']
+                review_url = {}
+                review_url['id'] = result['ids']['academic']['id']
+                review_url['url'] = result['ids']['academic']['url']
+                review_url['date'] = result['date_reviewed']
+                review_url['journal'] = result['journal']['name']
+
                 academic_reviews.append(review_url)
         except:
             print('Received invalid response')
 
 
         if r['next'] is not None:
-            req = req + '&page={}'.format(page)
+            req = req.replace('page={}'.format(page),'page={}'.format(page+1))
             page+=1
         else:
             break
-
-    return(academic_reviews)
+    d[id]['reviews'] = academic_reviews
+    return(d)
 
 
 def get_academic_basic_info(BASE_URL, id, d):
@@ -106,6 +120,10 @@ def get_academic_basic_info(BASE_URL, id, d):
     d[id] = {}
     try:
         d[id]['merit'] = r['merit']
+        d[id]['name'] = r['publishing_name']
+        d[id]['url'] = r['ids']['url']
+        d[id]['id'] = r['ids']['id']
+        d[id]['orcid'] = r['ids']['orcid']
         d[id]['pre'] = r['reviews']['pre']['count']
         d[id]['post'] = r['reviews']['post']['count']
 
@@ -114,12 +132,60 @@ def get_academic_basic_info(BASE_URL, id, d):
 
     return(d)
 
+
+def gen_review_triples(per_uri, data, g):
+    for review in data['reviews']:
+        rev_uri = 'review-{}'.format(review['id'])
+        vcard_uri = 'review-vcard-{}'.format(review['id'])
+        url_uri = 'review-url-{}'.format(review['id'])
+        role_uri = 'reviewer-role-{}'.format(review['id'])
+        g.add((D[rev_uri], RDF.type, PUB.Review))
+        g.add((D[rev_uri], RDFS.label, Literal('Review {}'.format(review['id']),
+               datatype=XSD.string)))
+        g.add((D[rev_uri], VIVO.contributingRole, D[role_uri]))
+        g.add((D[role_uri], VIVO.roleContributesTo, D[rev_uri]))
+        g.add((D[role_uri], RDF.type, VIVO.ReviewerRole))
+        g.add((D[role_uri], OBO.RO_0000052, per_uri))
+        g.add((per_uri, OBO.RO_0000053, D[role_uri]))
+        g.add((D[rev_uri], OBO.ARG_2000028, D[vcard_uri]))
+        g.add((D[vcard_uri], OBO.ARG_2000029, D[rev_uri]))
+        g.add((D[vcard_uri], RDF.type, VCARD.Individual))
+        g.add((D[vcard_uri], VCARD.hasURL, D[url_uri]))
+        g.add((D[url_uri], RDF.type, VCARD.URL))
+        g.add((D[url_uri], VCARD.url, Literal(review['url'])))
+    return g
+
+
+def get_people():
+    # Let's try to match on ORCIDs
+    query = ("PREFIX vivo: <"+VIVO+"> "
+             "PREFIX foaf: <"+FOAF+"> "
+             "SELECT ?per ?orcid "
+             "WHERE { "
+	         "?per a foaf:Person . "
+             "?per vivo:orcidId ?orcid . "
+             "} ")
+
+    bindings = vivo_api_query(query)
+    people = {}
+    if bindings:
+        for rec in bindings:
+             if 'per' in rec:
+                 uri = rec['per']['value']
+                 orcid = rec['orcid']['value'].replace('http://orcid.org/',
+                            '').replace('https://orcid.org/', '')
+                 people[orcid] = uri
+    log.debug(people)
+    return people
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-o", "--organization", help="Pull data for all "
                         "researchers affiliated with this organization.")
-    group.add_argument("-i", "--ids", help="The ORCID or Publons ID to search")
+    group.add_argument("-i", "--ids", help="The ORCID or Publons IDs to "
+                       "search in csv format")
 
     parser.add_argument("--api", default=False, dest="use_api",
                         action="store_true", help="Send the newly created "
@@ -170,14 +236,54 @@ logger.addHandler(handler)
 log = logging.getLogger(__name__)
 
 # Start the work
+people = get_people()
 if args.organization:
     academics = get_academics(BASE_URL, args.organization)
     log.debug(academics)
-else:
+elif args.ids: # Orgs or IDs required by the arg parser
     academics = args.ids.split(',')
     log.debug(academics)
+
+# Instantiate a graph and namespace
+g = Graph(namespace_manager=ns.ns_manager)
 
 d = {}
 for id in academics:
     d = get_academic_basic_info(BASE_URL, id, d)
     d = get_academic_details(BASE_URL, id, d)
+
+
+# Now we have a subset of data we can work with
+for publons_profile in d:
+    if 'orcid' in d[publons_profile] and d[publons_profile]['orcid']:
+        orcid = d[publons_profile]['orcid']
+
+        if orcid in people:
+            per_uri = URIRef(people[orcid])
+            g += gcard
+            log.debug('Matched record with ORCID {} in VIVO'.format(orcid))
+        else:
+            (per_uri, gcard) = create_vcard(d[publons_profile]['name'])
+            log.debug('ORCID {} not found in VIVO'.format(orcid))
+    else:
+        (per_uri, gcard) = create_vcard(d[publons_profile]['name'])
+        g += gcard
+    #print(d[publons_profile])
+
+    g+=gen_review_triples(per_uri, d[publons_profile], g)
+
+timestamp = str(datetime.now())[:-7]
+if len(g) > 0:
+    try:
+        with open("rdf/publons-"+timestamp+"-in.ttl", "w") as f:
+            f.write(g.serialize(format=args.format))
+            log.info('Wrote RDF to rdf/publons-' + timestamp +
+                     '-in.ttl in ' + args.format + ' format.')
+    except IOError:
+        # Handle the error.
+        log.exception("Failed to write RDF file. "
+                      "Does a directory named 'rdf' exist?")
+        log.exception("The following RDF was not saved: \n" +
+                      g.serialize(format=args.format))
+else:
+    log.info('No triples to INSERT.')
